@@ -15,6 +15,12 @@ public class CapActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_cap);
+
+        hideActionBar();
+    }
+
+    private void hideActionBar(){
+        this.getSupportActionBar().hide();
     }
 
 }

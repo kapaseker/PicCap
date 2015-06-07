@@ -1,6 +1,8 @@
 package com.azalea.www.piccap;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.hardware.Camera;
 import android.os.Build;
 import android.support.v4.app.Fragment;
@@ -10,10 +12,18 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 
 /**
@@ -24,8 +34,71 @@ public class CapFragment extends Fragment {
     Button mBtnCap = null;
     SurfaceView mSfvMain = null;
     Camera mCamera ;
-
+    private FrameLayout mPblayout = null;
     private static final int DEFAULT_CAMERA_DEGREE = 90;
+
+    @Override
+    public Animation onCreateAnimation(int transit, boolean enter, int nextAnim) {
+        return super.onCreateAnimation(transit, enter, nextAnim);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    private Camera.ShutterCallback mTakePicCallBack = new Camera.ShutterCallback() {
+        @Override
+        public void onShutter() {
+            if(mPblayout!=null){
+                mPblayout.setVisibility(View.VISIBLE);
+            }
+        }
+    };
+
+    private Camera.PictureCallback mJpgCallback = new Camera.PictureCallback() {
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera) {
+            String fileName = UUID.randomUUID()+(new Date()).toString()+".jpg";
+            FileOutputStream fos = null;
+            boolean isSuccess = false;
+            try {
+                fos = getActivity().openFileOutput(fileName, Context.MODE_PRIVATE);
+                fos.write(data);
+                isSuccess = true;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+                isSuccess = false;
+            }finally {
+                if(fos!=null){
+                    try {
+                        fos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        isSuccess = false;
+                    }
+                }
+            }
+
+            if(isSuccess){
+//                Toast.makeText(getActivity(),"Pictrue "+fileName+" Saved",Toast.LENGTH_SHORT).show();
+                Intent previewIntent = new Intent(getActivity(),PicPreViewActivity.class);
+                Bundle dataBundle = new Bundle();
+                dataBundle.putString(PicPreViewActivity.BUNDLE_PIC_FILE_PATH, getActivity().getFileStreamPath(fileName).getAbsolutePath());
+                previewIntent.putExtras(dataBundle);
+                startActivity(previewIntent);
+
+            }else{
+                Toast.makeText(getActivity(),"Problem Caughted",Toast.LENGTH_SHORT).show();
+            }
+
+            if(mPblayout!=null){
+                mPblayout.setVisibility(View.GONE);
+            }
+        }
+    };
 
     public CapFragment() {
     }
@@ -50,6 +123,10 @@ public class CapFragment extends Fragment {
         }
 
         mCamera.setDisplayOrientation(DEFAULT_CAMERA_DEGREE);
+
+        File fileDir = getActivity().getFilesDir();
+        File[] ff = fileDir.listFiles();
+        Toast.makeText(getActivity(),ff.length+" Files in "+fileDir.getAbsolutePath(),Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -78,13 +155,21 @@ public class CapFragment extends Fragment {
     }
 
 
+    private void takePicture(){
+        if(mCamera!=null){
+            mCamera.takePicture(mTakePicCallBack,null,mJpgCallback);
+        }
+    }
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View capView = inflater.inflate(R.layout.fragment_cap, container, false);
 
-        mBtnCap =(Button) capView.findViewById(R.id.btn_cap);
-        mSfvMain = (SurfaceView)capView.findViewById(R.id.sfv_main);
+        mBtnCap = (Button) capView.findViewById(R.id.btn_cap);
+        mSfvMain = (SurfaceView) capView.findViewById(R.id.sfv_main);
+        mPblayout = (FrameLayout) capView.findViewById(R.id.pb_containner);
 
         SurfaceHolder sfHolder = mSfvMain.getHolder();
         sfHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -107,8 +192,8 @@ public class CapFragment extends Fragment {
 
                 Camera.Parameters params = mCamera.getParameters();
 
-                Camera.Size paramSize = getBestPreviewSize(params.getSupportedPictureSizes(),width,height);
-                params.setPreviewSize(paramSize.width,paramSize.height);
+                Camera.Size paramSize = getBestPreviewSize(params.getSupportedPictureSizes(), width, height);
+                params.setPreviewSize(paramSize.width, paramSize.height);
                 mCamera.startPreview();
             }
 
@@ -120,7 +205,22 @@ public class CapFragment extends Fragment {
             }
         });
 
+        mBtnCap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                takePicture();
+                v.setEnabled(false);
+            }
+        });
+
         return capView;
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        if(mBtnCap!=null){
+            mBtnCap.setEnabled(true);
+        }
+    }
 }
