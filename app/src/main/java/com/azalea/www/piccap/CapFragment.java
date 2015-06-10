@@ -3,6 +3,10 @@ package com.azalea.www.piccap;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.os.Build;
 import android.support.v4.app.Fragment;
@@ -62,8 +66,17 @@ public class CapFragment extends Fragment {
             String fileName = UUID.randomUUID()+(new Date()).toString()+".jpg";
             FileOutputStream fos = null;
             boolean isSuccess = false;
+
+            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+            Matrix matrix = new Matrix();
+            if(getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
+                matrix.setRotate(90);
+            }
+
             try {
                 fos = getActivity().openFileOutput(fileName, Context.MODE_PRIVATE);
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
                 fos.write(data);
                 isSuccess = true;
             } catch (FileNotFoundException e) {

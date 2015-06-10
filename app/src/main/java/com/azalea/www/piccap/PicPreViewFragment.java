@@ -1,12 +1,14 @@
 package com.azalea.www.piccap;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.BitmapDrawable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -23,8 +25,12 @@ public class PicPreViewFragment extends Fragment {
 
     private ImageView mImageShow = null;
     private String mImagePath = null;
+    private Button mBtnShowList = null;
+
     public PicPreViewFragment() {
     }
+
+    public static PicPreViewFragment newInstance(){return new PicPreViewFragment();}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,6 +54,24 @@ public class PicPreViewFragment extends Fragment {
 
         View capView = inflater.inflate(R.layout.fragment_pic_pre_view, container, false);
         mImageShow = (ImageView)capView.findViewById(R.id.img_prev);
+        mBtnShowList = (Button)capView.findViewById(R.id.btn_showAll);
+
+        mBtnShowList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent listIntent = new Intent();
+                listIntent.setClass(getActivity(),ListPicActivity.class);
+                startActivity(listIntent);
+            }
+        });
+
+        return capView;
+    }
+
+
+    @Override
+    public void onStart() {
+        super.onStart();
 
         if(mImagePath!=null){
             BitmapDrawable bdPic = PictureUtil.getScaledPictrue(getActivity(),mImagePath);
@@ -57,7 +81,11 @@ public class PicPreViewFragment extends Fragment {
                 Toast.makeText(getActivity(),"File Not Found",Toast.LENGTH_LONG).show();
             }
         }
+    }
 
-        return capView;
+    @Override
+    public void onStop() {
+        super.onStop();
+        PictureUtil.cleanImageView(mImageShow);
     }
 }
