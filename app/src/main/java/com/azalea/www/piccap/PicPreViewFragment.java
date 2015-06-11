@@ -61,6 +61,7 @@ public class PicPreViewFragment extends Fragment {
             public void onClick(View v) {
                 Intent listIntent = new Intent();
                 listIntent.setClass(getActivity(),ListPicActivity.class);
+                listIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(listIntent);
             }
         });

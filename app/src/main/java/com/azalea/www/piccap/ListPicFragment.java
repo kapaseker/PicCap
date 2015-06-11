@@ -1,9 +1,13 @@
 package com.azalea.www.piccap;
 
 import android.app.ActionBar;
+import android.content.Intent;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -14,6 +18,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -23,8 +28,8 @@ import java.util.List;
 public class ListPicFragment extends Fragment {
 
     ListView mListMain = null;
-    List<File> mArrPicFiles = null;
-    ListPicAdapter mPicsAdapter = null;
+    List<File> mArrPicFiles = new ArrayList<File>();
+    ListPicAdapter mPicsAdapter = new ListPicAdapter();
 
     public ListPicFragment() {
     }
@@ -34,6 +39,11 @@ public class ListPicFragment extends Fragment {
         return new ListPicFragment();
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -47,25 +57,23 @@ public class ListPicFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-
-        mArrPicFiles = Arrays.asList(getActivity().getFilesDir().listFiles());
-        mPicsAdapter = new ListPicAdapter();
-        Toast.makeText(getActivity(),mArrPicFiles.size()+" ",Toast.LENGTH_LONG).show();
         mListMain.setAdapter(mPicsAdapter);
 
-//        new Thread(){
-//            public void run() {
-//                mArrPicFiles = Arrays.asList(getActivity().getFilesDir().listFiles());
-//                getActivity().runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        Toast.makeText(getActivity(),mArrPicFiles.size()+" ",Toast.LENGTH_LONG).show();
-//                        mPicsAdapter.notifyDataSetChanged();
-//                    }
-//                });
-//
-//            }
-//        }.start();
+        new Thread(){
+            public void run() {
+                mArrPicFiles.clear();
+                mArrPicFiles.addAll(Arrays.asList(getActivity().getFilesDir().listFiles()));
+                Iterator<File> arrIter = mArrPicFiles.iterator();
+
+                while(arrIter.hasNext()){
+                    File ff = arrIter.next();
+                    if(!ff.getName().endsWith(".jpg")){
+                        arrIter.remove();
+                    }
+                }
+                mPicsAdapter.notifyDataSetChanged();
+            }
+        }.start();
 
     }
 
@@ -73,16 +81,41 @@ public class ListPicFragment extends Fragment {
         TextView txt_Name;
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_list_pic,menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()){
+            case R.id.action_addpic:
+
+                Intent takeIntent = new Intent();
+                takeIntent.setClass(getActivity(),CapActivity.class);
+                startActivity(takeIntent);
+
+                break;
+            case R.id.action_settings:
+                break;
+        }
+
+
+        return true;
+    }
+
     private class ListPicAdapter extends BaseAdapter{
 
         @Override
         public int getCount() {
-            return 10;
+            return mArrPicFiles.size();
         }
 
         @Override
         public Object getItem(int position) {
-            return position;
+            return mArrPicFiles.get(position);
         }
 
         @Override
@@ -93,20 +126,19 @@ public class ListPicFragment extends Fragment {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
 
-//            PicViewHolder viewHolder = null;
-//            if(convertView==null){
-//                viewHolder = new PicViewHolder();
-//                viewHolder.txt_Name = new TextView(getActivity());
-//                convertView = viewHolder.txt_Name;
-//                convertView.setTag(viewHolder);
-//            }else{
-//                viewHolder = (PicViewHolder) convertView.getTag();
-//            }
-//
-//            viewHolder.txt_Name.setText("This is Good");
-            TextView tt = new TextView(getActivity());
-            tt.setText("This is Good");
-            return tt;
+            PicViewHolder viewHolder = null;
+            if(convertView==null){
+                convertView = getActivity().getLayoutInflater().inflate(R.layout.piclist_item,null);
+                viewHolder = new PicViewHolder();
+                viewHolder.txt_Name = (TextView) convertView.findViewById(R.id.txt_name);
+                convertView.setTag(viewHolder);
+            }else{
+                viewHolder = (PicViewHolder) convertView.getTag();
+            }
+
+            viewHolder.txt_Name.setText(mArrPicFiles.get(position).getName());
+
+            return convertView;
         }
     }
 }

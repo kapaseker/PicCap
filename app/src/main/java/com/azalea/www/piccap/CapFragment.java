@@ -63,7 +63,7 @@ public class CapFragment extends Fragment {
     private Camera.PictureCallback mJpgCallback = new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
-            String fileName = UUID.randomUUID()+(new Date()).toString()+".jpg";
+            String fileName = UUID.randomUUID()+"-"+(new Date()).getTime()+".jpg";
             FileOutputStream fos = null;
             boolean isSuccess = false;
 

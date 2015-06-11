@@ -4,4 +4,10 @@
     tools:context="com.azalea.www.piccap.ListPicActivity">
     <item android:id="@+id/action_settings" android:title="@string/action_settings"
         android:orderInCategory="100" app:showAsAction="never" />
+    <item
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="Take"
+        app:showAsAction="ifRoom"
+        android:id="@+id/action_addpic"
+        />
 </menu>
